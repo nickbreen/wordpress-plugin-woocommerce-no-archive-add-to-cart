@@ -21,39 +21,53 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
   //   add_action('woocommerce_after_shop_loop_item','replace_add_to_cart');
   // }
 
+  /**
+   * Fix up the classes on the button.
+   */
   add_filter('woocommerce_loop_add_to_cart_args', function ($args, $product) {
-    foreach (['ajax_add_to_cart','add_to_cart_button'] as $class)
-      $args['class'] = str_replace($class, '', $args['class']);
+    $classes = explode(' ', $args['class']);
+    $classes = array_diff($classes, ['ajax_add_to_cart', 'add_to_cart_button']);
+    $classes = array_merge($classes, ['no-add-to-cart']);
+    $args['class'] = implode(' ', $classes);
     return $args;
   });
 
+  /**
+   * Change the URL to the permalink.
+   */
+  add_filter('woocommerce_product_add_to_cart_url', function ($url, $product) {
+    return get_permalink($product->id);
+  });
 
-  if (!empty(get_option('no_add_to_cart_permalink_text'))) {
-
-  }
-
+  /**
+   * Change the text on the button.
+   */
+  $text_default = get_option('no_add_to_cart_permalink_text');
   $product_types = wc_get_product_types();
   foreach ( $product_types as $type => $label ) {
-    if (!empty(get_option("no_add_to_cart_permalink_{$type}_text"))) {
-
-    }
+    $text_type[$type] = get_option("no_add_to_cart_permalink_{$type}_text");
   }
+  // Set the default text if specified.
+  if (!empty($text_default)) {
+    add_filter('woocommerce_product_add_to_cart_text', function ($text, $product) use ($text_default) {
+      return $text_default;
+    });
+  }
+  // For all types, set the type specific text if specified.
+  add_filter('woocommerce_product_add_to_cart_text', function ($text, $_product) use ($text_type) {
+    global $product;
+    // Use the passed object if available, otherwise use the global.
+    $p = $_product ?: $product;
+    return !empty($text_type[$p->product_type]) ? $text_type[$p->product_type] : $text;
+  });
 }
-
-
-
-
-
-
-
-
 
 register_activation_hook( __FILE__, function () {
   // There is no UI for configuring these options
   add_option('no_add_to_cart', 'yes');
   add_option('no_add_to_cart_permalink', 'yes');
-  add_option('no_add_to_cart_permalink_text', '');
+  add_option('no_add_to_cart_permalink_text', NULL);
   $product_types = wc_get_product_types();
   foreach ( $product_types as $type => $label )
-    add_option("no_add_to_cart_permalink_{$type}_text", '');
+    add_option("no_add_to_cart_permalink_{$type}_text", NULL);
 });
