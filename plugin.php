@@ -10,38 +10,34 @@ Plugin URI: https://github.com/nickbreen/wordpress-plugin-woocommerce-no-add-to-
 
 
 if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-  //
-  // if ('yes' === get_option('no_add_to_cart')) {
-  //   add_action('init', function () {
-  //     remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
-  //   });
-  // }
-  //
-  // if ('yes' === get_option('no_add_to_cart_permalink')) {
-  //   add_action('woocommerce_after_shop_loop_item','replace_add_to_cart');
-  // }
+  // Alter the button behavior.
+  switch (get_option('no_add_to_cart')) {
+    case 'permalink':
+      /**
+      * Fix up the classes on the button.
+      */
+      add_filter('woocommerce_loop_add_to_cart_args', function ($args, $product) {
+        $classes = explode(' ', $args['class']);
+        $classes = array_diff($classes, ['ajax_add_to_cart', 'add_to_cart_button']);
+        $classes = array_merge($classes, ['no-add-to-cart']);
+        $args['class'] = implode(' ', $classes);
+        return $args;
+      });
+      /**
+       * Change the URL to the permalink.
+       */
+      add_filter('woocommerce_product_add_to_cart_url', function ($url, $product) {
+        return get_permalink($product->id);
+      });
+      break;
+    case 'hide':
+      add_action('init', function () {
+        remove_action( 'woocommerce_after_shop_loop_item', 'woocommerce_template_loop_add_to_cart', 10 );
+      });
+      break;
+  }
 
-  /**
-   * Fix up the classes on the button.
-   */
-  add_filter('woocommerce_loop_add_to_cart_args', function ($args, $product) {
-    $classes = explode(' ', $args['class']);
-    $classes = array_diff($classes, ['ajax_add_to_cart', 'add_to_cart_button']);
-    $classes = array_merge($classes, ['no-add-to-cart']);
-    $args['class'] = implode(' ', $classes);
-    return $args;
-  });
-
-  /**
-   * Change the URL to the permalink.
-   */
-  add_filter('woocommerce_product_add_to_cart_url', function ($url, $product) {
-    return get_permalink($product->id);
-  });
-
-  /**
-   * Change the text on the button.
-   */
+  // Change the text on the button.
   $text_default = get_option('no_add_to_cart_permalink_text');
   $product_types = wc_get_product_types();
   foreach ( $product_types as $type => $label ) {
@@ -64,8 +60,7 @@ if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', g
 
 register_activation_hook( __FILE__, function () {
   // There is no UI for configuring these options
-  add_option('no_add_to_cart', 'yes');
-  add_option('no_add_to_cart_permalink', 'yes');
+  add_option('no_add_to_cart', NULL);
   add_option('no_add_to_cart_permalink_text', NULL);
   $product_types = wc_get_product_types();
   foreach ( $product_types as $type => $label )
