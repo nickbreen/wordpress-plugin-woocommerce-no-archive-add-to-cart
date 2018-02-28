@@ -1,0 +1,19 @@
+{
+    "name": "nickbreen/wordpress-plugin-woocommerce-no-archive-add-to-cart",
+    "description": "Alter how the Add To Cart button works on product archive pages.",
+    "type": "wordpress-plugin",
+    "require": {
+        "composer/installers": "^1.0",
+        "php": ">=5.3"
+    },
+    "license": "GPLv3",
+    "repositories": [{
+        "type": "vcs",
+        "url": "https://github.com/nickbreen/wordpress-plugin-woocommerce-no-archive-add-to-cart"
+    }],
+    "authors": [{
+        "name": "Nick Breen",
+        "email": "nick@foobar.net.nz"
+    }]
+}
+
